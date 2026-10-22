@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Fonte : carnet de musculation, séances, chrono de repos, records et mensurations.">
+<meta name="theme-color" content="#0a0e15">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fonte">
+<title>Fonte</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav" aria-label="Sections"><div class="nav-in">
+  <div class="logo" aria-hidden="true">F</div>
+  <button data-act="tab" data-t="accueil" aria-label="Vue d'ensemble" title="Vue d'ensemble" aria-current="page"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></button>
+  <button data-act="tab" data-t="seance" aria-label="Séance" title="Séance"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button data-act="tab" data-t="historique" aria-label="Historique et progression" title="Historique et progression"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></button>
+  <button data-act="tab" data-t="programme" aria-label="Programme" title="Programme"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/></svg></button>
+  <button data-act="tab" data-t="corps" aria-label="Poids et mensurations" title="Poids et mensurations"><svg viewBox="0 0 24 24"><circle cx="12" cy="6" r="2.5"/><path d="M6 11h12M12 9v6M9 21l3-6 3 6"/></svg></button>
+  <button data-act="tab" data-t="reglages" aria-label="Paramètres et données" title="Paramètres et données"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></button>
+</div></nav>
+
+<div class="app">
+  <header class="pagehead"><div><div class="eyebrow">Ton espace d'entraînement</div><h1 id="title">Vue d'ensemble</h1></div><span class="st" id="status"></span></header>
+  <main>
+    <section id="tab-accueil"></section>
+    <section id="tab-seance" hidden></section>
+    <section id="tab-historique" hidden></section>
+    <section id="tab-programme" hidden></section>
+    <section id="tab-corps" hidden></section>
+    <section id="tab-reglages" hidden></section>
+  </main>
+</div>
+
+<datalist id="exos-list"></datalist>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<div class="dockwrap"><section class="dock" id="dock" aria-label="Chronomètre">
+  <div class="dock-bar"><i id="t-prog"></i></div>
+  <div class="dock-main">
+    <button class="dock-mode" data-act="t-panel" id="t-mode" aria-expanded="false" aria-controls="t-panel"><span id="t-label">Repos</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 8l4-4 4 4" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+    <output class="t-time" id="t-time" aria-live="off">1:30</output>
+    <button class="ib adj" data-act="t-minus" aria-label="Retirer 15 secondes">−15</button>
+    <button class="ib adj" data-act="t-plus" aria-label="Ajouter 15 secondes">+15</button>
+    <button class="ib" data-act="t-reset" aria-label="Remettre à zéro"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg></button>
+    <button class="ib lime" data-act="t-play" id="t-play" aria-label="Démarrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="t-ico" d="M7 4v16l13-8z"/></svg></button>
+  </div>
+  <div class="dock-panel" id="t-panel" hidden>
+    <div class="seg" id="t-modes">
+      <button data-act="t-setmode" data-m="repos" aria-pressed="true">Repos (décompte)</button>
+      <button data-act="t-setmode" data-m="libre" aria-pressed="false">Chrono libre</button>
+    </div>
+    <div id="t-repos-opts" style="display:flex;flex-direction:column;gap:10px">
+      <div class="seg" id="t-presets"></div>
+      <div class="row" style="align-items:center">
+        <div class="dur"><span>Durée</span><input type="text" inputmode="numeric" id="t-min" aria-label="Minutes" maxlength="2"><span>min</span><input type="text" inputmode="numeric" id="t-sec" aria-label="Secondes" maxlength="2"><span>s</span></div>
+        <button class="ib" data-act="t-minus" aria-label="Retirer 15 secondes">−15</button>
+        <button class="ib" data-act="t-plus" aria-label="Ajouter 15 secondes">+15</button>
+      </div>
+      <label class="chkl"><input type="checkbox" id="t-auto"> Lancer le repos à chaque série cochée</label>
+      <div class="fld"><span>Sonnerie de fin (touche pour écouter)</span><div class="seg" id="t-sons"></div></div>
+    </div>
+  </div>
+</section></div>
+
+<script src="app.js"></script>
+</body>
+</html>
