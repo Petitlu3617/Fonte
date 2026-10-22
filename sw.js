@@ -1,6 +1,6 @@
 /* Fonte : cache de l'appli pour l'utiliser hors ligne. Changer VERSION à chaque mise à jour des fichiers. */
-const VERSION='fonte-v2';
-const SHELL=['./','index.html','style.css','app.js','manifest.webmanifest','icons/icon.svg','icons/icon-192.png','icons/icon-512.png'];
+const VERSION='fonte-v3';
+const SHELL=['./','index.html','style.css','app.js','manifest.webmanifest','icons/kb-icon.svg','icons/kb-icon-192.png','icons/kb-icon-512.png'];
 
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
