@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Mémo : cartes de révision à répétition espacée (méthode Leitner), par paquets et dans les deux sens.">
+<meta name="theme-color" content="#0d0f1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mémo">
+<title>Mémo</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/memo-icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/memo-icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="nav" id="nav" aria-label="Sections"><div class="nav-in">
+  <div class="logo" aria-hidden="true">M</div>
+  <button data-act="tab" data-t="accueil" aria-label="Aujourd'hui" title="Aujourd'hui"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></button>
+  <button data-act="tab" data-t="paquets" aria-label="Paquets" title="Paquets"><svg viewBox="0 0 24 24"><rect x="7" y="4" width="13" height="16" rx="2"/><path d="M4 7v11a2 2 0 0 0 2 2"/></svg></button>
+  <button data-act="tab" data-t="reglages" aria-label="Réglages et données" title="Réglages et données"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></button>
+</div></nav>
+
+<div class="app">
+  <main id="main"></main>
+</div>
+
+<dialog id="dlg"><form method="dialog" id="dlgf"></form></dialog>
+<input type="file" id="importf" accept="application/json,.json" hidden>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
