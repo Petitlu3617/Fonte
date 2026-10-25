@@ -1,12 +1,13 @@
 /* Fonte : cache de l'appli pour l'utiliser hors ligne. Changer VERSION à chaque mise à jour des fichiers. */
-const VERSION='fonte-v3';
+const VERSION='fonte-v4';
 const SHELL=['./','index.html','style.css','app.js','manifest.webmanifest','icons/kb-icon.svg','icons/kb-icon-192.png','icons/kb-icon-512.png'];
 
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));
 });
+/* Ne supprime que les anciens caches de Fonte : d'autres applis peuvent partager la même adresse (GitHub Pages). */
 self.addEventListener('activate',e=>{
-  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
+  e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('fonte-')&&k!==VERSION).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));
 });
 /* Réseau d'abord (pour avoir la dernière version), cache en secours ; les polices passent aussi par le cache. */
 self.addEventListener('fetch',e=>{
