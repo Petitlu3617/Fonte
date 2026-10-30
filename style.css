@@ -125,6 +125,19 @@ textarea{resize:vertical;min-height:70px}
 .pe-f{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
 .pe-f .lbl{font-size:13.5px;color:var(--ink2);margin-right:8px}
 .pe-f input{width:64px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+/* Supersets : exercices liés affichés dans un seul cadre */
+.ssg{border:1px solid #3d4f1f;border-radius:18px;padding:10px;display:flex;flex-direction:column;gap:4px;min-width:0;background:rgba(196,242,95,.03)}
+.ss-h{display:flex;align-items:center;gap:8px;min-width:0}
+.ss-h .pill{display:inline-flex;align-items:center;gap:6px}
+.ss-h .pill svg,.sslink svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ss-h .sp{flex:1}
+.ssg .item{border:0;padding:8px 2px}
+.ssg .item+.item,.ssg .pe+.pe{border-top:1px dashed var(--line);border-radius:0}
+.ssg .pe{border:0;border-radius:0;padding:10px 2px}
+.sslink{align-self:center;display:inline-flex;align-items:center;gap:6px;border:1px dashed var(--line);background:transparent;color:var(--ink2);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:600;min-height:32px;margin:-4px 0}
+.sslink:hover{color:var(--lime);border-color:#3d4f1f}
+.card.ss{border-color:#3d4f1f}
+.ss-sep{border:0;border-top:1px dashed var(--line);margin:6px 0;width:100%}
 
 /* Historique */
 details.s{background:var(--card);border:1px solid var(--line);border-radius:16px}
