@@ -8,7 +8,7 @@ Suivi sportif : carnet de musculation installable sur téléphone (application w
 - **Séance** : lancement depuis le programme, saisie charge × répétitions, comparaison en direct avec la dernière fois, records signalés (★), durée de séance, notes.
 - **Historique** : détail des séances, courbes de progression par exercice (charge, reps, volume, 1RM estimé), records personnels.
 - **Programme** : séances types modifiables (séries, reps visées, ordre) et supersets : deux exercices liés s'affichent dans un seul cadre, sans repos entre eux.
-- **Corps** : poids, masse musculaire/grasse et mensurations avec courbes.
+- **Corps** : poids, masse musculaire/grasse, eau, graisse viscérale, IMC, âge métabolique et mensurations avec courbes.
 - **Chrono** : repos en décompte (lancé automatiquement à chaque série cochée) ou chrono libre, sonneries au choix, écran maintenu allumé.
 - **Données** : sauvegarde/restauration JSON, export CSV des séances et des mesures.
 

@@ -27,7 +27,7 @@ const isDone=x=>x&&x.done!==false&&x.reps>0;
 const GROUPS=[[/leg curl|ischio|souleve de terre/,'Ischios'],[/leg extension|squat|fente|presse/,'Quadriceps'],[/hip|fessier/,'Fessiers'],[/mollet/,'Mollets'],[/abdo|oblique|gainage|crunch/,'Abdominaux'],[/triceps|extension unilaterale|dips/,'Triceps'],[/curl|biceps/,'Biceps'],[/militaire|elevation|face pull|menton|oiseau|epaule/,'Épaules'],[/developpe|ecarte|pompe|pec/,'Pectoraux'],[/traction|tirage|row|dos/,'Dos']];
 const groupe=n=>{const t=na(n);for(const[r,g]of GROUPS)if(r.test(t))return g;return 'Autres'};
 const DEFAULT_EXOS=['Développé couché','Développé incliné','Développé militaire','Squat','Soulevé de terre','Rowing barre','Tractions','Tirage vertical','Dips','Curl biceps','Extension triceps','Élévations latérales','Presse à cuisses','Fentes','Leg curl','Leg extension','Hip thrust','Mollets debout','Pompes','Gainage'];
-const MES=[['poids','Poids','kg'],['mm','Masse musculaire','kg'],['mg','Masse grasse','%'],['taille','Tour de taille','cm'],['poitrine','Poitrine','cm'],['bras','Bras','cm'],['cuisse','Cuisse','cm'],['hanches','Hanches','cm']];
+const MES=[['poids','Poids','kg'],['mm','Masse musculaire','kg'],['mg','Masse grasse','%'],['eau','Eau','%'],['visc','Graisse viscérale',''],['imc','IMC',''],['age','Âge métabolique','ans'],['taille','Tour de taille','cm'],['poitrine','Poitrine','cm'],['bras','Bras','cm'],['cuisse','Cuisse','cm'],['hanches','Hanches','cm']];
 const TITLES={accueil:"Vue d'ensemble",seance:'Séance en cours',historique:'Historique',programme:'Programme',corps:'Poids & mensurations',reglages:'Paramètres & données'};
 
 /* ---------- Données ---------- */
@@ -404,14 +404,14 @@ function renderCorps(){
   const pts=list.filter(x=>typeof x[mk]==='number').map(x=>({d:x.date,v:x[mk]}));
   let h=`<form class="card" data-form="mes" novalidate><div><h2>Nouvelle mesure</h2><p class="sub">Remplis seulement ce que tu as mesuré.</p></div>
       <div class="mform"><label class="fld"><span>Date</span><input type="date" id="m-date" value="${today()}"></label>
-      ${MES.map(([k,l,u])=>`<label class="fld"><span>${l} (${u})</span><input type="text" inputmode="decimal" id="m-${k}" autocomplete="off"></label>`).join('')}</div>
+      ${MES.map(([k,l,u])=>`<label class="fld"><span>${l}${u?' ('+u+')':''}</span><input type="text" inputmode="decimal" id="m-${k}" autocomplete="off"></label>`).join('')}</div>
       <button class="btn lime" type="submit">Enregistrer la mesure</button></form>`;
   if(!list.length){ el.innerHTML=h+loadingOr("Ton poids et tes mensurations seront suivis ici. Une mesure par mois suffit pour voir une tendance."); return }
-  h+=`<div class="card"><div><h2>Évolution</h2><p class="sub">${ml}, en ${mu}</p></div>
+  h+=`<div class="card"><div><h2>Évolution</h2><p class="sub">${ml}${mu?', en '+mu:''}</p></div>
     <div class="seg" role="group" aria-label="Mesure affichée">${MES.map(([k,l])=>`<button data-act="mes" data-m="${k}" aria-pressed="${k===mk}">${l}</button>`).join('')}</div>
     ${pts.length?`<div class="chart" id="ch-mes"></div>${deltaLine(pts,mu)}`:`<div class="small muted">Aucune mesure de ce type pour l'instant.</div>`}</div>
     <div class="card"><div class="head"><h2>Relevés</h2>${dl?'<button class="btn sm" data-act="csv-mes">Exporter CSV</button>':''}</div><div class="tw"><table><thead><tr><th>Date</th>${MES.map(m=>`<th>${m[1]}</th>`).join('')}<th></th></tr></thead><tbody>
-    ${list.slice().reverse().map(x=>`<tr><td>${esc(dYear.format(toDate(x.date)))}</td>${MES.map(([k,,u])=>`<td>${typeof x[k]==='number'?fmt(x[k])+' '+u:'<span class="muted">·</span>'}</td>`).join('')}<td><button class="btn sm red" data-act="del-mes" data-id="${esc(x.date)}">Supprimer</button></td></tr>`).join('')}
+    ${list.slice().reverse().map(x=>`<tr><td>${esc(dYear.format(toDate(x.date)))}</td>${MES.map(([k,,u])=>`<td>${typeof x[k]==='number'?fmt(x[k])+(u?' '+u:''):'<span class="muted">·</span>'}</td>`).join('')}<td><button class="btn sm red" data-act="del-mes" data-id="${esc(x.date)}">Supprimer</button></td></tr>`).join('')}
     </tbody></table></div></div>`;
   el.innerHTML=h; if(pts.length)drawChart($('#ch-mes'),pts,mu);
 }
@@ -590,7 +590,7 @@ function csvSeances(){
   return rows;
 }
 function csvMesures(){
-  const rows=[['Date',...MES.map(m=>m[1]+' ('+m[2]+')')]];
+  const rows=[['Date',...MES.map(m=>m[1]+(m[2]?' ('+m[2]+')':''))]];
   Object.values(R.mesures).filter(x=>x&&x.date).sort((a,b)=>a.date<b.date?-1:1).forEach(x=>rows.push([x.date,...MES.map(m=>typeof x[m[0]]==='number'?x[m[0]]:'')]));
   return rows;
 }
