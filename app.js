@@ -141,6 +141,14 @@ function lastTime(k,exceptId){
   const o=index().ex[k]; if(!o)return null;
   const a=o.sessions.filter(x=>x.id!==exceptId); return a[a.length-1]||null;
 }
+/* Supersets : un exercice avec ss:true est lié à celui qui le précède. */
+const LINK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
+const blocks=a=>{const b=[];(a||[]).forEach((e,i)=>{if(i&&e&&e.ss&&b.length)b[b.length-1].push(i);else b.push([i])});return b};
+function keepExos(a,keep){ // retire des exercices sans casser les supersets restants
+  const out=[]; let kept=false;
+  (a||[]).forEach((e,i)=>{ if(!e.ss)kept=false; if(!keep(e,i))return; if(e.ss&&!kept)delete e.ss; kept=true; out.push(e) });
+  if(out[0])delete out[0].ss; return out;
+}
 function progTarget(nom){ for(const p of R.prog.seances||[])for(const e of p.exos||[])if(key(e.nom)===key(nom))return e; return null }
 function prevSet(i,j){const e=cur.exos[i]; const l=e&&lastTime(key(e.nom),cur.id); return l&&l.sets[j]||null}
 function cmpPrev(p,kg,reps){
@@ -151,7 +159,7 @@ function cmpPrev(p,kg,reps){
 }
 const dlHtml=c=>c?`<b class="dl ${c.cls}" aria-hidden="true">${c.txt}</b>`:'<b class="dl" hidden aria-hidden="true"></b>';
 const CHECK='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
-function exoCard(e,i){
+function exoBody(e,i){
   const k=key(e.nom), last=lastTime(k,cur.id), prior=priorSessions(k), pt=progTarget(e.nom);
   let bKg=0,bE1=0,bReps=0,has=prior.length>0,anyPr=false;
   for(const p of prior){bKg=Math.max(bKg,p.maxKg);bE1=Math.max(bE1,p.e1);bReps=Math.max(bReps,p.maxReps)}
@@ -168,12 +176,17 @@ function exoCard(e,i){
       <button class="chk" data-act="chk" data-i="${i}" data-j="${j}" aria-pressed="${d}" aria-label="${d?'Décocher':'Valider'} la série ${j+1}">${CHECK}</button>
       <button class="x" data-act="del-set" data-i="${i}" data-j="${j}" aria-label="Supprimer la série ${j+1}">×</button></div>`;
   }).join('');
-  return `<article class="card">
+  return `
     <div class="exo-top"><span class="badge">${pad(i+1)}</span><div class="tx"><h3>${esc(e.nom)}</h3><span>${esc(groupe(e.nom))}${pt?` · cible ${pt.series} × ${pt.reps}`:''}</span></div><button class="btn sm" data-act="del-exo" data-i="${i}">Retirer</button></div>
     ${last?`<div class="last">Dernière fois (${esc(dShort.format(toDate(last.date)))}) : <span class="num">${esc(kgTxt(last.sets[0].kg||0))} × ${last.sets.map(x=>x.reps).join(' / ')}</span></div>`:''}
     ${rows?`<div class="sethead"><span>N°</span><span>Charge</span><span></span><span>Reps</span><span>Fait</span><span></span></div><div class="sets">${rows}</div>`:''}
-    <div class="row" style="align-items:center;justify-content:space-between"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button><span class="chips">${cmpN?(nowR>prevR?`<span class="pill">+${nowR-prevR} rép. vs dernière fois</span>`:nowR<prevR?`<span class="pill red">−${prevR-nowR} rép. vs dernière fois</span>`:'<span class="pill grey">= dernière fois</span>'):''}${anyPr?'<span class="pill">★ Record battu</span>':''}</span></div>
-  </article>`;
+    <div class="row" style="align-items:center;justify-content:space-between"><button class="btn sm" data-act="add-set" data-i="${i}">+ Série</button><span class="chips">${cmpN?(nowR>prevR?`<span class="pill">+${nowR-prevR} rép. vs dernière fois</span>`:nowR<prevR?`<span class="pill red">−${prevR-nowR} rép. vs dernière fois</span>`:'<span class="pill grey">= dernière fois</span>'):''}${anyPr?'<span class="pill">★ Record battu</span>':''}</span></div>`;
+}
+const ssHead=n=>`<div class="ss-h"><span class="pill">${LINK}${n>2?'Tri-set':'Superset'}</span><span class="small muted">Enchaîne sans repos, puis repos</span></div>`;
+function exoCards(){
+  return blocks(cur.exos).map(b=>b.length>1
+    ?`<article class="card ss">${ssHead(b.length)}${b.map(i=>exoBody(cur.exos[i],i)).join('<hr class="ss-sep">')}</article>`
+    :`<article class="card">${exoBody(cur.exos[b[0]],b[0])}</article>`).join('');
 }
 function renderEditor(){
   const el=$('#tab-seance'), st=sumS(cur), isToday=cur.date===today(), stored=!!R.seances[cur.id];
@@ -187,7 +200,7 @@ function renderEditor(){
       <label class="fld grow"><span>Nom de la séance</span><input type="text" id="f-nom" value="${esc(cur.nom||'')}" placeholder="Ex. Push" maxlength="60" autocomplete="off"></label></div>
       <div class="row"><button class="btn" data-act="focus-exo">+ Exercice</button><button class="btn lime" data-act="terminer"${stored||cur.exos.length?'':' disabled'}>Terminer la séance</button></div>
     </div>
-    ${cur.exos.map(exoCard).join('')}
+    ${exoCards()}
     <form class="card" data-form="exo"><label class="fld"><span>${cur.exos.length?'Ajouter un exercice':'Premier exercice'}</span><input type="text" id="f-exo" list="exos-list" placeholder="Ex. Développé couché" maxlength="60" autocomplete="off"></label><button class="btn" type="submit">Ajouter l'exercice</button></form>
     <div class="card"><div><h2>Notes de séance</h2><p class="sub">Ressenti, technique, énergie, points à surveiller</p></div><textarea id="f-note" rows="3" maxlength="1000" placeholder="Ex. : bonne énergie, garder 2 min de repos, amplitude à surveiller…">${esc(cur.note||'')}</textarea></div>
     <p class="small muted" style="margin:0">Astuce : les chiffres en gris sont tes répétitions de la dernière fois. Si tu as fait pareil, coche sans rien saisir ; sinon tape ton nombre : la pastille verte (+) ou rouge (−) te montre en direct si tu fais mieux ou moins bien.</p>`;
@@ -207,7 +220,7 @@ function lancer(p){
   if(cur.ouverte&&sumS(cur).n>0){ toast("Termine d'abord la séance en cours."); showTab('seance'); return }
   if(cur.ouverte&&R.seances[cur.id]){ delete R.seances[cur.id]; persist('seances/'+cur.id,null) }
   cur=blank(); cur.nom=p.nom; cur.ouverte=true; cur.debut=Date.now();
-  cur.exos=(p.exos||[]).map(e=>({nom:e.nom,series:newRows(e.nom,e.series,e.reps,e.kg)}));
+  cur.exos=(p.exos||[]).map((e,j)=>{const o={nom:e.nom,series:newRows(e.nom,e.series,e.reps,e.kg)}; if(j&&e.ss)o.ss=true; return o});
   saveCur(); showTab('seance');
 }
 
@@ -349,16 +362,26 @@ function renderHistorique(){
 
 /* ---------- Programme ---------- */
 const UP='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>', DOWN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const mvBtns=(j,bi,nb,nom)=>`<button class="pe-mv" data-act="pe-mv" data-j="${j}" data-d="-1" aria-label="Monter ${esc(nom)}"${bi?'':' disabled'}>${UP}</button>
+        <button class="pe-mv" data-act="pe-mv" data-j="${j}" data-d="1" aria-label="Descendre ${esc(nom)}"${bi<nb-1?'':' disabled'}>${DOWN}</button>`;
+function peBlocks(ex,one){
+  const bl=blocks(ex);
+  return bl.map((b,bi)=>{
+    const body=b.length>1
+      ?`<div class="ssg"><div class="ss-h"><span class="pill">${LINK}${b.length>2?'Tri-set':'Superset'}</span><span class="sp"></span>${mvBtns(b[0],bi,bl.length,'le superset')}<button class="btn sm" data-act="pe-unss" data-j="${b[0]}">Délier</button></div>${b.map(j=>one(ex[j],j,false,bi,bl.length)).join('')}</div>`
+      :one(ex[b[0]],b[0],true,bi,bl.length);
+    const nx=bl[bi+1]; return body+(nx?`<button class="sslink" data-act="pe-ss" data-j="${nx[0]}" aria-label="Lier ${esc(ex[b[b.length-1]].nom)} et ${esc(ex[nx[0]].nom)} en superset">${LINK}Superset avec le suivant</button>`:'');
+  }).join('');
+}
 function progEditCard(p,i){
   const ex=p.exos||[];
   return `<div class="card"><div class="head"><div><div class="eyebrow">Modification</div><h2 style="margin-top:4px">${esc(p.nom)}</h2></div><button class="btn lime" data-act="pe-done">Terminé</button></div>
     <label class="fld"><span>Nom de la séance</span><input type="text" id="pe-nom" value="${esc(p.nom)}" maxlength="60" autocomplete="off"></label>
-    ${ex.length?ex.map((e,j)=>`<div class="pe"><div class="pe-top"><span class="badge" style="min-width:36px;height:36px;font-size:12px;border-radius:10px">${pad(j+1)}</span><b>${esc(e.nom)}</b>
-        <button class="pe-mv" data-act="pe-mv" data-j="${j}" data-d="-1" aria-label="Monter ${esc(e.nom)}"${j?'':' disabled'}>${UP}</button>
-        <button class="pe-mv" data-act="pe-mv" data-j="${j}" data-d="1" aria-label="Descendre ${esc(e.nom)}"${j<ex.length-1?'':' disabled'}>${DOWN}</button>
+    ${ex.length?peBlocks(ex,(e,j,solo,bi,nb)=>`<div class="pe"><div class="pe-top"><span class="badge" style="min-width:36px;height:36px;font-size:12px;border-radius:10px">${pad(j+1)}</span><b>${esc(e.nom)}</b>
+        ${solo?mvBtns(j,bi,nb,e.nom):''}
         <button class="x" data-act="pe-del" data-j="${j}" aria-label="Retirer ${esc(e.nom)}">×</button></div>
       <div class="pe-f"><span class="step"><span class="lbl">Séries</span><button data-act="pe-ser" data-j="${j}" data-d="-1" aria-label="Une série de moins">−</button><b class="num">${e.series}</b><button data-act="pe-ser" data-j="${j}" data-d="1" aria-label="Une série de plus">+</button></span>
-        <label class="step"><span class="lbl">Reps visées</span><input type="text" inputmode="numeric" data-pe-reps="${j}" value="${e.reps||''}" maxlength="3" aria-label="Répétitions visées, ${esc(e.nom)}"></label></div></div>`).join(''):'<div class="empty"><span>Aucun exercice pour l\'instant. Ajoute le premier ci-dessous.</span></div>'}
+        <label class="step"><span class="lbl">Reps visées</span><input type="text" inputmode="numeric" data-pe-reps="${j}" value="${e.reps||''}" maxlength="3" aria-label="Répétitions visées, ${esc(e.nom)}"></label></div></div>`):'<div class="empty"><span>Aucun exercice pour l\'instant. Ajoute le premier ci-dessous.</span></div>'}
     <form class="row" data-form="pe-add"><label class="fld grow"><span>Ajouter un exercice</span><input type="text" id="pe-exo" list="exos-list" placeholder="Ex. Tirage vertical" maxlength="60" autocomplete="off"></label><button class="btn" type="submit">Ajouter</button></form>
     <div><button class="btn sm red" data-act="del-prog" data-p="${i}">Retirer du programme</button></div></div>`;
 }
@@ -368,8 +391,9 @@ function renderProgramme(){
   let h=`<div class="head"><div><h2>Ton programme</h2><p class="sub">Tes séances types, modifiables à tout moment.</p></div><button class="btn sm" data-act="pe-new">+ Nouvelle séance</button></div>`;
   if(!progs.length){ el.innerHTML=h+loadingOr("Ton programme est vide. Crée une séance avec « + Nouvelle séance », ou dans l'historique ouvre une séance et choisis « En faire un modèle du programme »."); return }
   h+=progs.map((p,i)=>S.pe===i?progEditCard(p,i):`<div class="card"><div class="head"><div><h2>${esc(p.nom)}</h2><p class="sub">${(p.exos||[]).length} exercice${(p.exos||[]).length>1?'s':''} · base du programme</p></div><span class="row"><button class="btn" data-act="pe-edit" data-p="${i}">Modifier</button><button class="btn lime" data-act="lancer" data-p="${i}"${(p.exos||[]).length?'':' disabled'}>Lancer →</button></span></div>
-    ${(p.exos||[]).map((e,j)=>{const last=lastTime(key(e.nom));const kg=last?(last.sets[0].kg||0):(e.kg||0);return `<div class="item"><span class="badge">${pad(j+1)}</span><div class="tx"><b>${esc(e.nom)}</b><span>${esc(groupe(e.nom))} · ${e.series} série${e.series>1?'s':''} × ${e.reps} reps</span></div><span class="kg">${esc(kgTxt(kg))}</span></div>`}).join('')}</div>`).join('');
-  el.innerHTML=h+`<p class="small muted" style="margin:0">Touche « Modifier » pour changer le nombre de séries, les reps visées, l'ordre ou les exercices d'une séance, sans la lancer. La charge affichée est celle de ta dernière séance.</p>`;
+    ${blocks(p.exos).map(b=>{const it=j=>{const e=p.exos[j],last=lastTime(key(e.nom));const kg=last?(last.sets[0].kg||0):(e.kg||0);return `<div class="item"><span class="badge">${pad(j+1)}</span><div class="tx"><b>${esc(e.nom)}</b><span>${esc(groupe(e.nom))} · ${e.series} série${e.series>1?'s':''} × ${e.reps} reps</span></div><span class="kg">${esc(kgTxt(kg))}</span></div>`};
+      return b.length>1?`<div class="ssg"><div class="ss-h"><span class="pill">${LINK}${b.length>2?'Tri-set':'Superset'}</span></div>${b.map(it).join('')}</div>`:it(b[0])}).join('')}</div>`).join('');
+  el.innerHTML=h+`<p class="small muted" style="margin:0">Touche « Modifier » pour changer le nombre de séries, les reps visées, l'ordre ou les exercices d'une séance, sans la lancer. En modification, « Superset avec le suivant » réunit deux exercices dans un seul cadre. La charge affichée est celle de ta dernière séance.</p>`;
   if(S.pe!=null)renderDatalist();
 }
 
@@ -603,7 +627,7 @@ const ACT={
   'focus-exo':()=>{const f=$('#f-exo'); f.scrollIntoView({block:'center',behavior:'smooth'}); f.focus({preventScroll:true})},
   terminer:()=>{
     if(cur.ouverte&&cur.debut)cur.duree=Math.round((Date.now()-cur.debut)/1000);
-    cur.exos.forEach(e=>e.series=e.series.filter(isDone)); cur.exos=cur.exos.filter(e=>e.series.length); delete cur.ouverte; cur.exos.forEach(e=>e.series.forEach(x=>{delete x.cible;delete x.done}));
+    cur.exos.forEach(e=>e.series=e.series.filter(isDone)); cur.exos=keepExos(cur.exos,e=>e.series.length>0); delete cur.ouverte; cur.exos.forEach(e=>e.series.forEach(x=>{delete x.cible;delete x.done}));
     const t=sumS(cur); if(!cur.exos.length)cur.note=''; saveCur();
     toast(t.n?`Séance enregistrée : ${t.n} série${t.n>1?'s':''}, ${nf0.format(t.v)} kg${cur.duree?', '+durTxt(cur.duree):''}.`:'Séance vide, rien à enregistrer.');
     cur=blank(); touched=false; showTab(t.n?'accueil':'seance');
@@ -612,7 +636,7 @@ const ACT={
   more:()=>{S.histN+=20;renderHistorique()},
   'del-seance':b=>{ if(!arm(b))return; const id=b.dataset.id; delete R.seances[id]; persist('seances/'+id,null); if(cur.id===id){cur=blank();touched=false} renderHistorique() },
   'as-prog':b=>{ const s=R.seances[b.dataset.id]; if(!s)return; const nom=s.nom||'Séance';
-    const exos=(s.exos||[]).map(e=>{const d=(e.series||[]).filter(isDone); if(!d.length)return null; const pt=progTarget(e.nom); return {nom:e.nom,series:d.length,reps:pt?pt.reps:Math.max(...d.map(x=>x.reps)),kg:d[0].kg||0}}).filter(Boolean);
+    const exos=keepExos(clone(s.exos||[]),e=>(e.series||[]).some(isDone)).map(e=>{const d=e.series.filter(isDone), pt=progTarget(e.nom), o={nom:e.nom,series:d.length,reps:pt?pt.reps:Math.max(...d.map(x=>x.reps)),kg:d[0].kg||0}; if(e.ss)o.ss=true; return o});
     if(!exos.length)return; R.prog.seances=R.prog.seances||[]; const i=R.prog.seances.findIndex(p=>key(p.nom)===key(nom));
     if(i>=0)R.prog.seances[i]={nom,exos}; else R.prog.seances.push({nom,exos}); saveProg(); toast(`« ${nom} » ${i>=0?'mis à jour dans':'ajouté à'} ton programme.`) },
   'del-prog':b=>{ if(!arm(b))return; R.prog.seances.splice(+b.dataset.p,1); S.pe=null; saveProg(); renderProgramme() },
@@ -620,9 +644,11 @@ const ACT={
   'pe-done':()=>{ S.pe=null; renderProgramme(); window.scrollTo(0,0) },
   'pe-new':()=>{ R.prog.seances=R.prog.seances||[]; R.prog.seances.push({nom:'Nouvelle séance',exos:[]}); S.pe=R.prog.seances.length-1; saveProg(); renderProgramme(); const n=$('#pe-nom'); if(n){n.focus();n.select()} },
   'pe-ser':b=>{ const e=R.prog.seances[S.pe].exos[+b.dataset.j]; e.series=Math.min(12,Math.max(1,(e.series||1)+ +b.dataset.d)); saveProg(); renderProgramme() },
-  'pe-mv':b=>{ const a=R.prog.seances[S.pe].exos, j=+b.dataset.j, k=j+ +b.dataset.d; if(k<0||k>=a.length)return; [a[j],a[k]]=[a[k],a[j]]; saveProg(); renderProgramme() },
-  'pe-del':b=>{ if(!arm(b))return; R.prog.seances[S.pe].exos.splice(+b.dataset.j,1); saveProg(); renderProgramme() },
-  'del-exo':b=>{ const i=+b.dataset.i; if(cur.exos[i].series.some(isDone)&&!arm(b))return; cur.exos.splice(i,1); saveCur(); renderEditor() },
+  'pe-mv':b=>{ const p=R.prog.seances[S.pe], a=p.exos, j=+b.dataset.j, bl=blocks(a), bi=bl.findIndex(x=>x.includes(j)), k=bi+ +b.dataset.d; if(bi<0||k<0||k>=bl.length)return; [bl[bi],bl[k]]=[bl[k],bl[bi]]; p.exos=bl.flat().map(i=>a[i]); keepExos(p.exos,()=>true); saveProg(); renderProgramme() },
+  'pe-del':b=>{ if(!arm(b))return; const p=R.prog.seances[S.pe], j=+b.dataset.j; p.exos=keepExos(p.exos,(e,i)=>i!==j); saveProg(); renderProgramme() },
+  'pe-ss':b=>{ const e=R.prog.seances[S.pe].exos[+b.dataset.j]; if(!e)return; e.ss=true; saveProg(); renderProgramme() },
+  'pe-unss':b=>{ const a=R.prog.seances[S.pe].exos, bl=blocks(a).find(x=>x.includes(+b.dataset.j)); if(!bl)return; bl.forEach(i=>delete a[i].ss); saveProg(); renderProgramme() },
+  'del-exo':b=>{ const i=+b.dataset.i; if(cur.exos[i].series.some(isDone)&&!arm(b))return; cur.exos=keepExos(cur.exos,(e,k)=>k!==i); saveCur(); renderEditor() },
   'del-set':b=>{ cur.exos[+b.dataset.i].series.splice(+b.dataset.j,1); saveCur(); renderEditor() },
   'add-set':b=>{ const e=cur.exos[+b.dataset.i], l=e.series[e.series.length-1], r={kg:l?l.kg||0:0,reps:null,done:false}; if(l&&l.cible)r.cible=l.cible; e.series.push(r); saveCur(); renderEditor() },
   chk:b=>{ const i=+b.dataset.i,j=+b.dataset.j,s=cur.exos[i].series[j];
@@ -630,6 +656,7 @@ const ACT={
     if(!readSet(i,j)){toast('Vérifie la charge et les répétitions de cette série.');return}
     if(!s.reps){ const p=prevSet(i,j); if(p)s.reps=p.reps; else if(s.cible)s.reps=s.cible; else{toast('Indique le nombre de répétitions.');$(`#rp-${i}-${j}`).focus();return} }
     s.done=true; saveCur(); renderEditor();
+    const nx=cur.exos[i+1]; if(nx&&nx.ss){ toast('Superset : enchaîne avec '+nx.nom+'.'); return } // pas de repos entre deux exercices liés
     if(R.reg.auto){ if(T.running)tPause(); T.mode='repos'; T.left=T.dur*1000; T.acc=0; tStart(); drawTimer(true) } },
   mes:b=>{S.mes=b.dataset.m;renderCorps()},
   'del-mes':b=>{ if(!arm(b))return; delete R.mesures[b.dataset.id]; persist('mesures/'+b.dataset.id,null); renderCorps() },
